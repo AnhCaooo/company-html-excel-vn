@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-import pandas as pd
+import openpyxl
 
 def main(): 
 	# Website URL 
@@ -23,22 +23,38 @@ def main():
 	for result in soup.find_all('div', class_='search-results'):
 		name = result.find('a').text.strip()
 		link = result.find('a')['href']
-		company_info = {'Name': name, 'link': link}
+		company_info = {'Name': name, 'Link': link}
 		contact_info = string_to_dict(result.find('p').text.split('-')[1].strip())
 
 		# Concat Append the data to the list
 		data.append({**company_info, **contact_info})
 
-	# Create pandas dataframe
-	df = pd.DataFrame(data)
+	# Create a workbook
+	wb = openpyxl.Workbook()
 
-	# ! CANNOT EXPORT TO EXCEL FILE YET
-	# Save to Excel file
-	try:
-		df.to_excel("company.xlsx", index=False)
-		print("Data saved to company.xlsx")
-	except pd.errors.ExcelFileError as e:
-		print(f"Error saving to Excel: {e}")
+	# Get the active worksheet
+	ws = wb.active
+
+	# Set column headers
+	ws.cell(row=1, column=1).value = "Name"
+	ws.cell(row=1, column=2).value = "Link"
+	ws.cell(row=1, column=3).value = "Đại diện pháp luật"
+	ws.cell(row=1, column=4).value = "Địa chỉ"
+
+	# Iterate through the list and write data to cells
+	row_num = 2
+	for company_data in data:
+		ws.cell(row=row_num, column=1).value = company_data['Name']
+		ws.cell(row=row_num, column=2).value = company_data['Link']
+		ws.cell(row=row_num, column=3).value = company_data['Đại diện pháp luật']
+		ws.cell(row=row_num, column=4).value = company_data['Địa chỉ']
+		row_num += 1
+
+	# Save the workbook with a filename
+	filename = "company_data.xlsx"
+	wb.save(filename)
+
+	print(f"Company data exported to Excel file: {filename}")
 
 
 def string_to_dict(text: str):
