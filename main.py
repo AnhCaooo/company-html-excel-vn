@@ -33,6 +33,8 @@ def main():
 
 			# Append dict data to text file
 			append_text(company_info)
+		
+		print('get company info from page %s successfully' % str(index_page + 1))
 
 
 def do_get_request_and_return_response_content(url: str) -> bytes:
