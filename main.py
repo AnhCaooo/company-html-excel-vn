@@ -2,16 +2,18 @@ import requests
 from bs4 import BeautifulSoup
 import os
 
-TEXT_FILE_NAME = 'company_info.txt'
+CSV_FILE: str = 'company_info.csv'
+COMPANY_NAME_KEY: str = 'Tên công ty'
+COMPANY_OWNER_KEY: str = 'Đại diện pháp luật:'
+COMPANY_PHONE_NUMBER_KEY: str = 'Số điện thoại:'
 
 def main(): 
 	# Website URL 
 	url = "https://thongtincongty.org/tp-ho-chi-minh/"
-	total_pages = 1
-
 	remove_text_if_exists()
- 
-	for index_page in range(total_pages): 
+	
+	# todo: make the range more dynamic which user can specify it via cli
+	for index_page in range(0, 10): 
 		html_content = do_get_request_and_return_response_content(url + '/page/' + str(index_page + 1))
 
 		# Parse HTML content
@@ -27,6 +29,11 @@ def main():
 			company_soup = BeautifulSoup(company_html_content, 'html.parser')
 			company_info = {}
 
+			# Get company name 
+			company_name = company_soup.find('h1', class_='entry-title').text.strip()
+			company_info[COMPANY_NAME_KEY] = company_name
+			
+			# Get other info
 			for div in company_soup.find_all('div', class_='ttdn'):
 				label = div.find('label').text.strip()
 				if div.find('span', class_='gia-tri'):
@@ -41,8 +48,8 @@ def main():
 		print('get company info from page %s successfully' % str(index_page + 1))
 
 def remove_text_if_exists():
-    if os.path.exists(TEXT_FILE_NAME):
-        os.remove(TEXT_FILE_NAME)
+    if os.path.exists(CSV_FILE):
+        os.remove(CSV_FILE)
 
 def do_get_request_and_return_response_content(url: str) -> bytes:
 	try:
@@ -56,15 +63,11 @@ def do_get_request_and_return_response_content(url: str) -> bytes:
 
 def append_text(dict_data):
 	"""
-	Appends text to a text file and have a new line right after.
-
-	Args:
-		text: The text to append to the file.
+	Appends text to a csv file.
 	"""
-	with open(TEXT_FILE_NAME, 'a') as file:
+	with open(CSV_FILE, 'a') as file:
 		for key, value in dict_data.items():  
-			# as 'Address - Địa chỉ is not needed, so we skip it in text file'
-			if key != 'Địa chỉ:':
+			if key == COMPANY_OWNER_KEY or key == COMPANY_PHONE_NUMBER_KEY or key == COMPANY_NAME_KEY:
 				file.write('%s,' % (value))
 		file.write("\n")
 		file.close()
