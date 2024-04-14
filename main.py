@@ -1,12 +1,16 @@
 import requests
 from bs4 import BeautifulSoup
-import openpyxl
+import os
+
+TEXT_FILE_NAME = 'company_info.txt'
 
 def main(): 
 	# Website URL 
 	url = "https://thongtincongty.org/tp-ho-chi-minh/"
-	total_pages = 100
+	total_pages = 1
 
+	remove_text_if_exists()
+ 
 	for index_page in range(total_pages): 
 		html_content = do_get_request_and_return_response_content(url + '/page/' + str(index_page + 1))
 
@@ -18,7 +22,7 @@ def main():
 			link = result.find('a')['href']
 
 			company_html_content = do_get_request_and_return_response_content(link)
-   
+
 			# Parse HTML content
 			company_soup = BeautifulSoup(company_html_content, 'html.parser')
 			company_info = {}
@@ -36,6 +40,9 @@ def main():
 		
 		print('get company info from page %s successfully' % str(index_page + 1))
 
+def remove_text_if_exists():
+    if os.path.exists(TEXT_FILE_NAME):
+        os.remove(TEXT_FILE_NAME)
 
 def do_get_request_and_return_response_content(url: str) -> bytes:
 	try:
@@ -45,7 +52,8 @@ def do_get_request_and_return_response_content(url: str) -> bytes:
 	except requests.exceptions.RequestException as e:
 		print(f"Error: {e}")
 		exit()
-    
+
+
 def append_text(dict_data):
 	"""
 	Appends text to a text file and have a new line right after.
@@ -53,10 +61,11 @@ def append_text(dict_data):
 	Args:
 		text: The text to append to the file.
 	"""
-	filename = 'company_info.txt'
-	with open(filename, 'a') as file:
-		for _, value in dict_data.items():  
-			file.write('%s,' % (value))
+	with open(TEXT_FILE_NAME, 'a') as file:
+		for key, value in dict_data.items():  
+			# as 'Address - Địa chỉ is not needed, so we skip it in text file'
+			if key != 'Địa chỉ:':
+				file.write('%s,' % (value))
 		file.write("\n")
 		file.close()
     
