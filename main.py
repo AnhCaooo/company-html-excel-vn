@@ -65,7 +65,7 @@ def append_text(dict_data):
 	"""
 	Appends text to a csv file.
 	"""
-	with open(CSV_FILE, 'a') as file:
+	with open(CSV_FILE, 'a', encoding='utf-8') as file:
 		for key, value in dict_data.items():  
 			if key == COMPANY_OWNER_KEY or key == COMPANY_PHONE_NUMBER_KEY or key == COMPANY_NAME_KEY:
 				file.write('%s,' % (value))
