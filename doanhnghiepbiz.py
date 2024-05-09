@@ -7,26 +7,30 @@ from bs4 import BeautifulSoup
 import requests
 
 
+COMPANY_NAME_KEY: str = 'Tên công ty'
+COMPANY_OWNER_KEY: str = 'Người đại diện'
+COMPANY_TAX_CODE_KEY: str = 'Số ĐKKD/MST'
+COMPANY_PHONE_KEY: str = 'Điện thoại'
+COMPANY_ADDRESS_KEY: str = 'Địa chỉ'
 BASE_URL = 'https://doanhnghiep.biz'
 OPTION_SEGMENT = 'dia-diem'
 CITY_SEGMENT = 'tp-ho-chi-minh'
 DISTRICT_SEGMENT = 'huyen-hoc-mon-70137'
 PARENT_HTML_CONTENT_AS_TEXT = 'companies_html.txt'
-
-COMPANY_NAME_KEY: str = 'Tên công ty'
+URL = '%s/%s/%s/%s' % (BASE_URL, OPTION_SEGMENT, CITY_SEGMENT, DISTRICT_SEGMENT)
 CSV_FILE: str = 'company_info.csv'
-keys_to_write = ['Tên công ty', 'Người đại diện', 'Số ĐKKD/MST', 'Điện thoại', 'Địa chỉ']
-
+KEYS_TO_WRITE = [COMPANY_NAME_KEY, COMPANY_OWNER_KEY, COMPANY_TAX_CODE_KEY, COMPANY_PHONE_KEY, COMPANY_ADDRESS_KEY]
+START_PAGE = 7
+END_PAGE = 10
+ 
 def main(): 
-	url = '%s/%s/%s/%s' % (BASE_URL, OPTION_SEGMENT, CITY_SEGMENT, DISTRICT_SEGMENT)
 	remove_text_if_exists(CSV_FILE)
-	start_page = 7
-	end_page = 10
-	print('start to get data from page %d to %d at page %s'% (start_page, end_page, BASE_URL))
-	for index_page in range(start_page, end_page): 
+
+	print('start to get data from page %d to %d at page %s'% (START_PAGE, END_PAGE, BASE_URL))
+	for index_page in range(START_PAGE, END_PAGE): 
 		remove_text_if_exists(PARENT_HTML_CONTENT_AS_TEXT)
 		
-		targeting_url = '%s/?p=%s' % (url, index_page)
+		targeting_url = '%s/?p=%s' % (URL, index_page)
 
 		base_html_content = do_get_request_and_return_response_content(targeting_url)
 		
@@ -44,30 +48,36 @@ def main():
 			return 
 		for line in links_list:
 			time.sleep(3)
-			company_info = {}
 			company_url = BASE_URL + line
 			company_info_site = do_get_request_and_return_response_content(company_url)
 			company_soup = BeautifulSoup(company_info_site, 'html.parser')
-			
-			company_table = company_soup.find('table', class_='company-table')
-			if not company_table: 
-				print("Table with class 'company-table' not found.")
-				return 
-				
-			company_info[COMPANY_NAME_KEY] = company_table.find('th').text.strip()
-			for row in company_table.find('tbody').find_all('tr'):
-				# Check if there are 2 td elements and no colspan attribute
-				if len(row.find_all('td')) == 2 and not row.td.has_attr('colspan'):
-					key = row.find('td').text.strip()  # Get text from first td
-					value = row.find_all('td')[1].text.strip()  # Get text from second td
-					if value:
-						company_info[key] = value
-					else:
-						company_info[key] = '' 
-			append_objects_to_csv(company_info, keys_to_write, CSV_FILE)
+
+			company_info = get_company_info(company_soup) 
+			append_objects_to_csv(company_info, KEYS_TO_WRITE, CSV_FILE)
 			print('get info via this link "%s" completed!' % line)
+
 		print('get companies info in page %d successfully!' % (index_page))
 
+
+def get_company_info(soup: BeautifulSoup): 
+	company_info = {}
+	company_table = soup.find('table', class_='company-table')
+	if not company_table: 
+		print("Table with class 'company-table' not found.")
+		return 
+	company_info[COMPANY_NAME_KEY] = company_table.find('th').text.strip()
+	
+	for row in company_table.find('tbody').find_all('tr'):
+		# Check if there are 2 td elements and no colspan attribute
+		if len(row.find_all('td')) == 2 and not row.td.has_attr('colspan'):
+			key = row.find('td').text.strip()  # Get text from first td
+			value = row.find_all('td')[1].text.strip()  # Get text from second td
+			if value:
+				company_info[key] = value
+			else:
+				company_info[key] = '' 
+	return company_info
+	
 
 def do_get_request_and_return_response_content(url: str) -> bytes:
 	try:
@@ -78,6 +88,7 @@ def do_get_request_and_return_response_content(url: str) -> bytes:
 		print(f"Error: {e}")
 		exit()
 
+
 def append_text(dict_data, targeting_file):
 	"""
 	Appends text to a targeting file.
@@ -87,6 +98,7 @@ def append_text(dict_data, targeting_file):
 		file.write("\n")
 		file.close()
 	
+
 def append_objects_to_csv(given_data, keys_to_write, targeting_file):
 	# Prepare data to write (dictionary with specific key-value pairs)
 	data_to_write = {key: given_data[key] for key in keys_to_write if key in given_data}
@@ -104,6 +116,7 @@ def append_objects_to_csv(given_data, keys_to_write, targeting_file):
 		writer.writerow(data_to_write)
 		file.close()
 
+
 def read_file(filename: str):
 	try:
 		with open(filename, 'r') as file:
@@ -115,11 +128,11 @@ def read_file(filename: str):
 		print(f"Error: File '{filename}' not found.")
 		return []
 
+
 def remove_text_if_exists(target_file):
 	if os.path.exists(target_file):
 		os.remove(target_file)
+
+
 if __name__ == "__main__":
 	main() 
- 
- 
- 
