@@ -15,13 +15,15 @@ PARENT_HTML_CONTENT_AS_TEXT = 'companies_html.txt'
 
 COMPANY_NAME_KEY: str = 'Tên công ty'
 CSV_FILE: str = 'company_info.csv'
-keys_to_write = ['Tên công ty', 'Người đại diện', 'Điện thoại', 'Địa chỉ']
+keys_to_write = ['Tên công ty', 'Người đại diện', 'Số ĐKKD/MST', 'Điện thoại', 'Địa chỉ']
 
 def main(): 
 	url = '%s/%s/%s/%s' % (BASE_URL, OPTION_SEGMENT, CITY_SEGMENT, DISTRICT_SEGMENT)
 	remove_text_if_exists(CSV_FILE)
-	
-	for index_page in range(7, 8): 
+	start_page = 7
+	end_page = 10
+	print('start to get data from page %d to %d at page %s'% (start_page, end_page, BASE_URL))
+	for index_page in range(start_page, end_page): 
 		remove_text_if_exists(PARENT_HTML_CONTENT_AS_TEXT)
 		
 		targeting_url = '%s/?p=%s' % (url, index_page)
@@ -59,11 +61,11 @@ def main():
 					key = row.find('td').text.strip()  # Get text from first td
 					value = row.find_all('td')[1].text.strip()  # Get text from second td
 					if value:
-						company_info[key] = value.replace("\n", ".")
+						company_info[key] = value
 					else:
 						company_info[key] = '' 
 			append_objects_to_csv(company_info, keys_to_write, CSV_FILE)
-			print('get info via this link "%s" completed!', line)
+			print('get info via this link "%s" completed!' % line)
 		print('get companies info in page %d successfully!' % (index_page))
 
 
