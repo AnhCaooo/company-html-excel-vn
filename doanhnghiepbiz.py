@@ -2,6 +2,7 @@
 # targeting website 
 import csv
 import os
+import time
 from bs4 import BeautifulSoup
 import requests
 
@@ -40,6 +41,7 @@ def main():
 			print("No lines found in the file. Something went wrong when parse HTML to string and store the file")
 			return 
 		for line in links_list:
+			time.sleep(3)
 			company_info = {}
 			company_url = BASE_URL + line
 			company_info_site = do_get_request_and_return_response_content(company_url)
@@ -61,7 +63,8 @@ def main():
 					else:
 						company_info[key] = '' 
 			append_objects_to_csv(company_info, keys_to_write, CSV_FILE)
-		print('get companies info in page %d successfully' % (index_page))
+			print('get info via this link "%s" completed!', line)
+		print('get companies info in page %d successfully!' % (index_page))
 
 
 def do_get_request_and_return_response_content(url: str) -> bytes:
